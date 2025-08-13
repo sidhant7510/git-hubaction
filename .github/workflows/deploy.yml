@@ -1,4 +1,4 @@
-name: Deploy Python App
+name: Deploy Flask to EC2
 
 on:
   push:
@@ -10,22 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # 1. Checkout the code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
+      # 2. Setup SSH key
+      - name: Configure SSH
         run: |
-          pip install -r requirements.txt
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy to EC2
+      # 3. Copy files to EC2
+      - name: Upload application files
         run: |
-          scp -i ${{ secrets.SSH_PRIVATE_KEY }} -r . ec2-user@${{ secrets.EC2_IP }}:/home/ec2-user/app
-          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ec2-user@${{ secrets.EC2_IP }} << 'EOF'
-            cd /home/ec2-user/app
-            nohup python3 app.py &
-          EOF
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" ./ ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/
+
+      # 4. Run deployment script on EC2
+      - name: Run deploy script on EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} "bash /home/ubuntu/app/deploy.sh"
+
