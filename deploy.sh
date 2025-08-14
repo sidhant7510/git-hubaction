@@ -12,5 +12,5 @@ pip install -r requirements.txt
 pkill -f "python app.py" || true
 
 # Start Flask on specified port
-nohup python app.py --host=0.0.0.0 --port=5000 &
+nohup python app.py --host=0.0.0.0 --port=5000 --domean
 
