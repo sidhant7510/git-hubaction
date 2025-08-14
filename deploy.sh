@@ -12,12 +12,12 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install dependencies
-pip3 install --upgrade pip
-pip3 install -r requirements.txt
+pip install --upgrade pip
+pip install -r requirements.txt
 
 # Kill any running instance of this app
 pkill -f "python app.py" || true
 
-# Start Flask on specified port
-nohup python3 app.py --host=0.0.0.0 --port=5000 &
+# Start Flask on specified port, log output
+nohup ./venv/bin/python app.py --host=0.0.0.0 --port=5000 > app.log 2>&1 &
 
